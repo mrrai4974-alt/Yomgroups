@@ -138,6 +138,65 @@
     });
   }
 
+  /* ---- Heading mask reveal ---- */
+  if (!reduce) {
+    var heads = document.querySelectorAll(".hero h1, .page-hero h1, .section-head h2");
+    heads.forEach(function (h) {
+      h.classList.add("mask-wrap");
+      h.innerHTML = '<span class="mask-in">' + h.innerHTML + "</span>";
+    });
+    if ("IntersectionObserver" in window) {
+      var mo = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add("in-view"); mo.unobserve(e.target); }
+        });
+      }, { threshold: 0.3 });
+      setTimeout(function () { heads.forEach(function (h) { mo.observe(h); }); }, 60);
+    } else {
+      heads.forEach(function (h) { h.classList.add("in-view"); });
+    }
+  }
+
+  /* ---- Hero mouse parallax ---- */
+  var heroSec = document.querySelector(".hero");
+  if (heroSec && !isTouch && !reduce) {
+    var pv = heroSec.querySelector(".hero-visual");
+    var floats = heroSec.querySelectorAll(".hero-float");
+    heroSec.addEventListener("mousemove", function (e) {
+      var r = heroSec.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5;
+      var y = (e.clientY - r.top) / r.height - 0.5;
+      if (pv) pv.style.transform = "translate(" + (x * 16) + "px," + (y * 16) + "px)";
+      floats.forEach(function (f, i) { var d = (i + 1) * 9; f.style.transform = "translate(" + (x * d) + "px," + (y * d) + "px)"; });
+    });
+    heroSec.addEventListener("mouseleave", function () {
+      if (pv) pv.style.transform = "";
+      floats.forEach(function (f) { f.style.transform = ""; });
+    });
+  }
+
+  /* ---- Intro preloader (once per session) ---- */
+  if (!reduce && !sessionStorage.getItem("yg_loaded")) {
+    var pl = document.createElement("div");
+    pl.className = "preloader";
+    pl.innerHTML = '<div class="preloader__inner"><div class="preloader__count" id="plCount">0</div><div class="preloader__bar"><i id="plBar"></i></div><div class="preloader__label">YOM Groups</div></div>';
+    document.body.appendChild(pl);
+    document.body.classList.add("loading");
+    var c = 0, cEl = pl.querySelector("#plCount"), bEl = pl.querySelector("#plBar");
+    var timer = setInterval(function () {
+      c += Math.floor(Math.random() * 9) + 4;
+      if (c >= 100) { c = 100; clearInterval(timer);
+        setTimeout(function () {
+          pl.classList.add("done");
+          document.body.classList.remove("loading");
+          sessionStorage.setItem("yg_loaded", "1");
+          setTimeout(function () { pl.remove(); }, 900);
+        }, 260);
+      }
+      cEl.textContent = c; bEl.style.width = c + "%";
+    }, 65);
+  }
+
   /* ---- Footer year ---- */
   var yr = document.getElementById("year");
   if (yr) yr.textContent = new Date().getFullYear();
